@@ -1,16 +1,39 @@
-# React + Vite
+# Auto Renomeador de NF (Vite + React)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ferramenta inteligente para extração de dados de Notas Fiscais (NFS-e e DANFE) e renomeação automática de arquivos seguindo padrões corporativos.
 
-Currently, two official plugins are available:
+## 🚀 Funcionalidades
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Extração Automática**: Usa PDF.js e OCR (Tesseract.js) para extrair:
+  - Nome do Fornecedor / Emitente
+  - Número da Nota Fiscal (formatado com 9 dígitos)
+  - Data de Emissão
+  - Valor Total da Nota / Produtos
+- **Suporte Amplo**: Compatível com NFS-e (incluindo layouts complexos como SJC) e DANFE (Produto).
+- **Renomeação em Tempo Real**: Visualize a mudança do nome do arquivo instantaneamente ao ajustar os campos.
+- **Exportação CSV**: Gere relatórios rápidos de todos os arquivos processados.
+- **Modo Dark Premium**: Interface moderna com animações e alta responsividade.
 
-## React Compiler
+## 🛠️ Tecnologias
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 19** + **Vite**
+- **Tailwind CSS 4**
+- **Lucide React** (Ícones)
+- **Framer Motion** (Animações)
+- **PDF.js** (Parsing de PDF)
+- **Tesseract.js** (OCR para arquivos sem texto selecionável)
 
-## Expanding the ESLint configuration
+## 📦 Como usar
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1.  **Arraste** um ou mais arquivos PDF para a área de upload.
+2.  **Confira** os dados extraídos automaticamente.
+3.  **Ajuste** se necessário (os campos são editáveis).
+4.  **Copie** o novo nome do arquivo ou **baixe** o arquivo já renomeado diretamente pelo navegador.
+
+## 🚢 Deploy no Vercel
+
+O projeto está pronto para ser hospedado no Vercel. Use o comando:
+
+```bash
+npx vercel
+```
