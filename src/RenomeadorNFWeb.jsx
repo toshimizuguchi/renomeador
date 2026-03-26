@@ -49,8 +49,8 @@ const buildFileName = ({ empresa, tipoItem, dataEmissao, numeroNF, fornecedor, v
     sanitize(moneyBRL(valor)),
   ].filter(Boolean);
 
-  if (!partes.length) return `arquivo.${extensao}`;
-  return `${partes.join(' - ')}.${extensao}`;
+  if (!partes.length) return `ARQUIVO.${extensao.toUpperCase()}`;
+  return `${partes.join(' - ').toUpperCase()}.${extensao.toLowerCase()}`;
 };
 
 const emptyRow = (id, arquivoOriginal = '') => ({
@@ -318,8 +318,11 @@ export default function RenomeadorNFWeb() {
                               <SelectValue placeholder="Selecione..." />
                             </SelectTrigger>
                             <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
-                              <SelectItem value="Serviço">Serviço</SelectItem>
-                              <SelectItem value="Produto">Produto</SelectItem>
+                              <SelectItem value="Serviço">SERVIÇO</SelectItem>
+                              <SelectItem value="Produto">PRODUTO</SelectItem>
+                              <SelectItem value="Fatura">FATURA</SelectItem>
+                              <SelectItem value="Invoice">INVOICE</SelectItem>
+                              <SelectItem value="Boleto">BOLETO</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
