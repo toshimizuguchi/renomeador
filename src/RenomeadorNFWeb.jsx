@@ -36,7 +36,7 @@ const formatDateBR = (value) => {
   if (!value) return '';
   const [y, m, d] = value.split('-');
   if (!y || !m || !d) return value;
-  return `${d}-${m}-${y}`;
+  return `${d}.${m}.${y}`;
 };
 
 const buildFileName = ({ empresa, tipoItem, dataEmissao, numeroNF, fornecedor, valor, extensao = 'pdf' }) => {
