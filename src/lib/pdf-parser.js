@@ -177,10 +177,11 @@ export const parseNFData = (text) => {
   const valorKeywords = [
     'Valor\\s+Total\\s+da\\s+Nota',
     'Valor\\s+Total\\s+dos\\s+Produtos',
+    'VALOR\\s+TOTAL\\s+DOS\\s+PRODUTOS',
     'Valor\\s+Total\\s+do\\s+Produto',
     'Valor\\s+Líquido\\s+da\\s+NFS-e',
+    'Valor\\s+dos\\s+serviços',
     'Valor\\s+do\\s+Serviço',
-    'Valor\\s+do\\s+Produto',
     'Valor\\s+Serviço'
   ];
 
