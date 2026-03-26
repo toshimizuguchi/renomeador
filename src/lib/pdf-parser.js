@@ -142,56 +142,78 @@ export const parseNFData = (text) => {
     if (danfeUpperMatch) data.fornecedor = cleanName(danfeUpperMatch[1]);
   }
 
-  // 4. Número da NF
-  // Tenta encontrar padrões comuns de número de nota (9 dígitos com ou sem pontos)
+  // 4. Número da NF (melhorado)
   const nfPatterns = [
-    /(?:Número\s+da\s+NFS-e|Número\s+da\s+NF-e|Número\s+da\s+NF|Número|Nº|No|N\.º|N\.|N|N0)[:\s]*(\d+(?:\.\d+)*)/i,
-    /(\d{3})\.(\d{3})\.(\d{3})/,
-    /N[ºo\.]\s*(\d{3}(?:\.\d{3}){2})/i,
-    /(\d+)\s*\/\s*[A-Z]/i // SJC
+    /(?:Número\s+da\s+NFS-e|Número\s+da\s+NF-e|Número\s+da\s+NFE|Número\s+da\s+NF|Número|Nº|No|N\.º|N\.|N|N0|NUMERO)[:\s]*(\d+(?:[\s.-]*\d+)*)/i,
+    /(\d{3})\s*[.-]\s*(\d{3})\s*[.-]\s*(\d{3})/,
+    /N[ºo\.]?\s*(\d{1,9})/i,
+    /(\d+)\s*[\/\-]\s*[A-Z]{1,3}/i // Formato prefeitura (SJC, etc)
   ];
 
   for (const pattern of nfPatterns) {
     const match = cleanText.match(pattern);
     if (match) {
-      const numPart = match[1] || match[0];
-      data.numeroNF = numPart.replace(/\D/g, '').padStart(9, '0');
-      if (data.numeroNF && data.numeroNF.length >= 1) break;
+      const numPart = (match[1] || match[0]).replace(/\D/g, '');
+      if (numPart.length >= 1) {
+        data.numeroNF = numPart.padStart(9, '0').substring(0, 9);
+        break;
+      }
     }
   }
 
-  // 5. Data de Emissão
-  const emissaoDateMatchF = cleanText.match(/(?:Data\s+e\s+Hora\s+da\s+emissão|DATA\s+DE\s+EMISSÃO|EMISSÃO)[:\s]*(\d{2})\/(\d{2})\/(\d{4})/i);
-  const emissaoDateMatchB = cleanText.match(/(\d{2})\/(\d{2})\/(\d{4})[\s0-9:]*(?:Data\s+e\s+Hora\s+da\s+emissão|DATA\s+DE\s+EMISSÃO|EMISSÃO)/i);
+  // 5. Data de Emissão (mais flexível)
+  const emissaoDateMatchF = cleanText.match(/(?:Data\s+e\s+Hora\s+da\s+emissão|DATA\s+DE\s+EMISSÃO|EMISSÃO|EMISS[\s\d:]*AO)[:\s]*(\d{2})\s*[\/.-]\s*(\d{2})\s*[\/.-]\s*(\d{4})/i);
+  const emissaoDateMatchB = cleanText.match(/(\d{2})\s*[\/.-]\s*(\d{2})\s*[\/.-]\s*(\d{4})[\s0-9:]*(?:Data\s+e\s+Hora\s+da\s+emissão|DATA\s+DE\s+EMISSÃO|EMISSÃO)/i);
 
   if (emissaoDateMatchF) {
     data.dataEmissao = `${emissaoDateMatchF[3]}-${emissaoDateMatchF[2]}-${emissaoDateMatchF[1]}`;
   } else if (emissaoDateMatchB) {
     data.dataEmissao = `${emissaoDateMatchB[3]}-${emissaoDateMatchB[2]}-${emissaoDateMatchB[1]}`;
   } else {
-    const dateMatch = cleanText.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    // Busca qualquer data no formato DD/MM/YYYY ou DD.MM.YYYY ou DD-MM-YYYY
+    const dateMatch = cleanText.match(/(\d{2})\s*[\/.-]\s*(\d{2})\s*[\/.-]\s*(\d{4})/);
     if (dateMatch) data.dataEmissao = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
   }
 
+  // Função auxiliar para criar regex que suporta espaços opcionais entre letras (comum em extrações de PDF problemáticas)
+  const flexibleRegex = (str) => {
+    return str.split('').map(char => {
+      if (char === ' ') return '\\s+';
+      // Escapar caracteres especiais de regex
+      if (['.', '*', '+', '?', '^', '$', '{', '}', '(', ')', '[', ']', '|', '\\'].includes(char)) {
+        return '\\' + char + '\\s*';
+      }
+      return char + '\\s*';
+    }).join('');
+  };
+
   // 6. Valor Total
-  const valorKeywords = [
-    'Valor\\s+Total\\s+da\\s+Nota',
-    'Valor\\s+Total\\s+dos\\s+Produtos',
-    'VALOR\\s+TOTAL\\s+DOS\\s+PRODUTOS',
-    'Valor\\s+Total\\s+do\\s+Produto',
-    'Valor\\s+Líquido\\s+da\\s+NFS-e',
-    'Valor\\s+dos\\s+serviços',
-    'Valor\\s+do\\s+Serviço',
-    'Valor\\s+Serviço'
+  const rawKeywords = [
+    'Valor Total da Nota',
+    'Valor Total dos Produtos',
+    'Valor Total do Produto',
+    'Valor Total da NF',
+    'VALOR TOTAL DOS PRODUTOS',
+    'Valor Líquido da NFS-e',
+    'Valor dos serviços',
+    'Valor do Serviço',
+    'Valor Serviço',
+    'Total a pagar',
+    'Valor da Nota',
+    'Valor Líquido',
+    'Total Bruto',
+    'Total Bruto da Nota'
   ];
 
-  // Busca o rótulo e depois pega o primeiro valor monetário vindo depois dele (mesmo que longe)
-  for (const kw of valorKeywords) {
-    const kwRegex = new RegExp(kw, 'i');
+  for (const kw of rawKeywords) {
+    const kwRegex = new RegExp(flexibleRegex(kw), 'i');
     const kwMatch = cleanText.match(kwRegex);
     if (kwMatch) {
-      const textAfter = cleanText.substring(kwMatch.index + kwMatch[0].length, kwMatch.index + kwMatch[0].length + 150);
-      const moneyMatch = textAfter.match(/(\d{1,3}(?:\.\d{3})*,\d{2})/);
+      // Pega uma janela maior após o match para garantir que encontre o valor
+      const textAfter = cleanText.substring(kwMatch.index + kwMatch[0].length, kwMatch.index + kwMatch[0].length + 200);
+      
+      // Regex melhorada para valor monetário BR (ex: 1.234,56 ou 1234,56 ou R$ 100,00)
+      const moneyMatch = textAfter.match(/(?:R\$)?\s*(\d{1,3}(?:\.\d{3})*,\d{2})/i);
       if (moneyMatch) {
         data.valor = moneyMatch[1];
         break;
@@ -199,11 +221,12 @@ export const parseNFData = (text) => {
     }
   }
 
-  // Fallback Valor
+  // Fallback Valor: se não achou por palavra-chave, tenta pegar o maior valor monetário do fim da nota
   if (!data.valor) {
     const prices = cleanText.match(/(\d{1,3}(?:\.\d{3})*,\d{2})/g);
     if (prices && prices.length > 0) {
-      data.valor = prices[prices.length - 1]; // Geralmente o último é o total
+      // Frequentemente o maior valor ou o último é o total
+      data.valor = prices[prices.length - 1]; 
     }
   }
 
